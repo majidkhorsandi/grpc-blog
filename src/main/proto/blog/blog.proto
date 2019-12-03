@@ -30,9 +30,18 @@ message ReadBlogResponse {
     Blog blog = 1;
 }
 
+message UpdateBlogRequest {
+    Blog blog = 1;
+}
+
+message UpdateBlogResponse {
+    Blog blog = 1;
+}
+
 
 service BlogService {
     rpc CreateBlog (CreateBlogRequest) returns (CreateBlogResponse) {};
     rpc ReadBlog (ReadBlogRequest) returns (ReadBlogResponse) {};
     rpc ReadAllBlogs(ReadAllBlogsRequest) returns (stream ReadBlogResponse) {};
+    rpc UpdateBlog (UpdateBlogRequest) returns (UpdateBlogResponse) {};
 }

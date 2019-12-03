@@ -16,7 +16,8 @@ public class BlogClient {
 
       //createBlog(stub);
       //readBlog(stub);
-      readAllBlogs(stub);
+      //readAllBlogs(stub);
+      updateBlog(stub);
 
   }
 
@@ -42,12 +43,30 @@ public class BlogClient {
 
   private static void readBlog(BlogServiceGrpc.BlogServiceBlockingStub stub) {
     ReadBlogRequest request =
-        ReadBlogRequest.newBuilder().setId("5de583479769240580d38037").build();
+        ReadBlogRequest.newBuilder().setId("5de583479769240580d38030").build();
 
       ReadBlogResponse readBlogResponse = stub.readBlog(request);
       System.out.println("Returned blog with id: " + readBlogResponse.getBlog().getId());
       System.out.println("Blog title: " + readBlogResponse.getBlog().getTitle());
       System.out.println("Blog author: " + readBlogResponse.getBlog().getAuthorId());
       System.out.println("Blog content: " + readBlogResponse.getBlog().getContent());
+  }
+
+  private static void updateBlog(BlogServiceGrpc.BlogServiceBlockingStub stub) {
+      Blog blog = Blog.newBuilder()
+              .setId("5de583479769240580d38037")
+              .setTitle("Update title")
+              .setAuthorId("Majid Khorsandi")
+              .setContent("This is the updated content")
+              .build();
+
+      UpdateBlogRequest blogRequest = UpdateBlogRequest.newBuilder()
+              .setBlog(blog)
+              .build();
+
+      UpdateBlogResponse updateBlogResponse = stub.updateBlog(blogRequest);
+      if (updateBlogResponse != null) {
+          System.out.println("Successfully update the blog");
+      }
   }
 }

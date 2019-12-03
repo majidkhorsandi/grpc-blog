@@ -2,6 +2,7 @@ package com.github.majidkhorsandi.blog.server;
 
 import com.mongodb.Block;
 import com.mongodb.client.*;
+import com.mongodb.client.result.UpdateResult;
 import com.proto.blog.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -39,10 +40,8 @@ public class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
   @Override
   public void readBlog(ReadBlogRequest request, StreamObserver<ReadBlogResponse> responseObserver) {
     String blogId = request.getId();
+
     System.out.println("Looking up the blog with id: " + request.getId());
-
-    System.out.println("the created object id is: " + new ObjectId(blogId).toHexString());
-
     Document result = collection.find(eq("_id", new ObjectId(blogId))).first();
 
     if (result == null) {
@@ -57,15 +56,52 @@ public class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
   }
 
   @Override
-  public void readAllBlogs(ReadAllBlogsRequest request, StreamObserver<ReadBlogResponse> responseObserver) {
+  public void readAllBlogs(
+      ReadAllBlogsRequest request, StreamObserver<ReadBlogResponse> responseObserver) {
     System.out.println("Looking up all the blog ...");
 
     FindIterable<Document> result = collection.find();
-    result.cursor().forEachRemaining(r -> {
-      responseObserver.onNext(buildBlogResponse(r));
-    });
+    result
+        .cursor()
+        .forEachRemaining(
+            r -> {
+              responseObserver.onNext(buildBlogResponse(r));
+            });
 
     responseObserver.onCompleted();
+  }
+
+  @Override
+  public void updateBlog(
+      UpdateBlogRequest request, StreamObserver<UpdateBlogResponse> responseObserver) {
+    Blog blog = request.getBlog();
+    String blogId = blog.getId();
+
+    Document result = collection.find(eq("_id", new ObjectId(blogId))).first();
+    if (result == null) {
+      responseObserver.onError(
+          Status.NOT_FOUND
+              .withDescription("The blog with the corresponding id was not found")
+              .asRuntimeException());
+      return;
+    }
+
+    Document update = new Document();
+    update.append("author_id", blog.getAuthorId());
+    update.append("title", blog.getTitle());
+    update.append("content", blog.getContent());
+    UpdateResult updateResult = collection.replaceOne(eq("_id", new ObjectId(blogId)), update);
+
+    if (updateResult.wasAcknowledged()) {
+        System.out.println("Successfully updated the blog");
+      responseObserver.onNext(UpdateBlogResponse.newBuilder().setBlog(blog).build());
+      responseObserver.onCompleted();
+    } else {
+      responseObserver.onError(
+          Status.ABORTED
+              .withDescription("The blog update was not completed successfully")
+              .asRuntimeException());
+    }
   }
 
   private ReadBlogResponse buildBlogResponse(Document result) {
